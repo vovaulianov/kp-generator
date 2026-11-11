@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Генератор комерційних пропозицій: заповни форму, отримай зверстану КП у PDF. Дані компанії зберігаються лише у твоєму браузері.">
+<meta name="robots" content="noindex">
+<title>Генератор КП</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0B0A'/%3E%3Cpath d='M6 20l5-7 5 7 5-7 5 7' fill='none' stroke='%23EEEAE0' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;700&family=Geologica:wght@400;500;600&display=swap">
+<style>
+/* Document type: the brand face when it is installed on this computer, Geologica as the stand-in */
+@font-face { font-family: "DocSans"; font-weight: 400; src: local("Zlam Book"), local("Zlam-Book"); }
+@font-face { font-family: "DocSans"; font-weight: 500; src: local("Zlam Medium"), local("Zlam-Medium"); }
+@font-face { font-family: "DocSans"; font-weight: 600; src: local("Zlam Semi Bold"), local("Zlam SemiBold"), local("Zlam-SemiBold"); }
+:root {
+  --ink: #0B0B0A; --rail: #131312; --raise: #1B1B19; --line: rgba(238,234,224,.12); --line-2: rgba(238,234,224,.24);
+  --bone: #EEEAE0; --mute: rgba(238,234,224,.66); --faint: rgba(238,234,224,.42); --signal: #FE5000; --bad: #ff8a6a; --ok: #9bd08a;
+  --f-ui: "Geologica", "Segoe UI", system-ui, sans-serif; --f-mono: "Geist Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-doc: "DocSans", "Geologica", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--ink); color: var(--bone); font: 14px/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: 440px minmax(0, 1fr); height: 100%; }
+.form { background: var(--rail); border-right: 1px solid var(--line); overflow-y: auto; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 20px; }
+.view { overflow-y: auto; padding: 16px 24px 60px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.top h1 { margin: 0 auto 0 0; font: 600 18px/1.2 var(--f-ui); letter-spacing: -.01em; }
+.label { font: 500 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.sec { display: flex; flex-direction: column; gap: 10px; }
+.sec + .sec { border-top: 1px solid var(--line); padding-top: 18px; }
+.sec > h2 { margin: 0; font: 500 11px/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f > span { font-size: 12px; color: var(--mute); }
+.f input, .f select, .f textarea { background: var(--ink); border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0; }
+.f textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
+.f input[type=number] { font-family: var(--f-mono); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line-2); background: transparent; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-weight: 500; font-size: 13px; white-space: nowrap; }
+.btn:hover { border-color: var(--faint); background: rgba(238,234,224,.05); }
+.btn.primary { background: var(--signal); border-color: var(--signal); color: var(--ink); }
+.btn.primary:hover { background: #ff6a24; }
+.btn.small { padding: 5px 9px; font-size: 12px; }
+.btn:disabled { opacity: .4; cursor: default; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.check input { accent-color: var(--signal); width: 16px; height: 16px; }
+.note { margin: 0; font-size: 12px; color: var(--mute); }
+.pos { border: 1px solid var(--line-2); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--raise); }
+.pos .head { display: flex; align-items: center; gap: 8px; }
+.pos .head b { font-weight: 600; margin-right: auto; }
+.pos details summary { cursor: pointer; font-size: 12px; color: var(--mute); }
+.pos details > div { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.sum { font: 13px var(--f-mono); color: var(--mute); font-variant-numeric: tabular-nums; }
+.sum b { color: var(--bone); font-weight: 500; }
+.issues { margin: 0; padding: 10px 12px 10px 28px; border: 1px solid var(--bad); border-radius: 8px; color: var(--bad); font-size: 13px; }
+.status { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 12px var(--f-mono); color: var(--mute); }
+.status .ok { color: var(--ok); } .status .warn { color: var(--bad); }
+.banner { border: 1px dashed var(--signal); border-radius: 8px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.banner p { margin: 0; flex: 1; min-width: 220px; font-size: 13px; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--bone); color: var(--ink); padding: 10px 14px; border-radius: 8px; font-weight: 500; font-size: 13px; z-index: 20; }
+
+/* ---------- document ---------- */
+#pages { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; transform-origin: 0 0; }
+.page { position: relative; width: 595pt; height: 842pt; background: #fff; color: #0B0B0A; overflow: hidden; flex: none; font-family: var(--f-doc); box-shadow: 0 0 0 1px var(--line), 0 20px 50px rgba(0,0,0,.45); }
+.page .abs { position: absolute; }
+.d-small { font-size: 7pt; line-height: 9.6pt; }
+.d-body { font-size: 9.2pt; line-height: 13.4pt; }
+.d-foot { font-size: 6.6pt; line-height: 9pt; }
+.d-mono { font-family: var(--f-mono); font-weight: 500; }
+.measure { position: absolute; left: -9999px; top: 0; width: 491pt; visibility: hidden; font-family: var(--f-doc); color: #0B0B0A; }
+.blk { display: flow-root; font-size: 9.2pt; line-height: 13.4pt; font-weight: 400; }
+.blk.j { text-align: justify; hyphens: auto; }
+.blk b, .blk.h { font-weight: 600; }
+.blk.h { font-size: 9.4pt; }
+.blk.title { font-weight: 600; font-size: 12.5pt; line-height: 16pt; letter-spacing: .06em; text-align: center; }
+.blk.ref { display: flex; justify-content: space-between; align-items: flex-end; gap: 24pt; }
+.blk.ref .to { text-align: right; white-space: pre-line; }
+.blk.li { display: grid; grid-template-columns: 16pt minmax(0, 1fr); }
+.blk.li svg { width: 16pt; height: 13.4pt; }
+.trow { display: grid; column-gap: 16pt; font-size: 8.4pt; line-height: 10.8pt; padding: 3.4pt 0; }
+.trow.head { font-weight: 500; font-size: 8pt; border-bottom: .75pt solid #0B0B0A; }
+.trow .n { font-family: var(--f-mono); font-weight: 500; font-size: 8pt; font-variant-numeric: tabular-nums; }
+.trow .r { text-align: right; white-space: nowrap; }
+.trow.total { padding-top: 10.4pt; font-weight: 600; }
+.trow.total .n { font-weight: 700; }
+.sign { position: relative; height: 122pt; }
+.sign .line { position: absolute; left: 258pt; top: 30pt; width: 110pt; border-top: .5pt solid #0B0B0A; }
+.sign .who { position: absolute; left: 0; top: 22pt; width: 250pt; }
+.sign .name { position: absolute; left: 376pt; top: 22pt; font-weight: 600; white-space: nowrap; }
+.sign .mp { position: absolute; left: 268pt; top: 44pt; width: 74pt; height: 74pt; border: .4pt dashed #0B0B0A; border-radius: 50%; display: grid; place-items: center; font-size: 7.4pt; }
+.sign img { position: absolute; }
+.sign .stamp { left: 180pt; top: 4pt; width: 113pt; }
+.sign .sig { left: 254pt; top: -1pt; width: 113pt; }
+
+@media (max-width: 980px) { .app { grid-template-columns: minmax(0, 1fr); height: auto; } .form { border-right: 0; overflow: visible; } .view { overflow: visible; padding: 16px; } }
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { height: auto; background: #fff; }
+  .form, .top, .banner, .issues, .status, .toast { display: none !important; }
+  .app { display: block; height: auto; } .view { padding: 0; overflow: visible; display: block; }
+  #pages { transform: none !important; gap: 0; display: block; height: auto !important; }
+  #pagesWrap { height: auto !important; }
+  .measure { display: none; }
+  .page { box-shadow: none; width: 210mm; height: 296.6mm; break-after: page; break-inside: avoid; }
+  .page:last-child { break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="form" aria-label="Дані КП">
+    <section class="sec">
+      <h2>Документ</h2>
+      <div class="grid2">
+        <label class="f"><span>Вих. №</span><input id="f-номер" autocomplete="off"></label>
+        <label class="f"><span>Дата КП</span><input id="f-дата" type="date"></label>
+      </div>
+      <label class="f"><span>Адресат (кожен рядок окремо)</span><textarea id="f-адресат" rows="2" placeholder="Військова частина А0000"></textarea></label>
+      <label class="f"><span>Код ДК 021:2015 предмета закупівлі</span><input id="f-дк021" placeholder="з оголошення про закупівлю"></label>
+    </section>
+
+    <section class="sec">
+      <h2>Позиції</h2>
+      <div id="positions" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="row"><button type="button" class="btn small" id="addPos">Додати позицію</button><span class="sum" id="total"></span></div>
+    </section>
+
+    <section class="sec">
+      <h2>Умови</h2>
+      <div class="grid2">
+        <label class="f"><span>Строк постачання</span><input id="f-строк" placeholder="до 31.10.2026 року"></label>
+        <label class="f"><span>Графік (якщо інший)</span><input id="f-графік" placeholder="як строк"></label>
+      </div>
+      <label class="f"><span>Умови оплати</span><input id="f-оплата"></label>
+      <label class="f"><span>Логістичний маршрут</span><input id="f-логістика"></label>
+      <div class="grid2">
+        <label class="f"><span>КП діє до</span><input id="f-діє_до" type="date"></label>
+        <div class="f" style="justify-content:flex-end;gap:8px">
+          <label class="check"><input type="checkbox" id="f-сума_прописом"> Сума прописом</label>
+          <label class="check"><input type="checkbox" id="f-печатка_підпис"> Печатка і підпис</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Файли</h2>
+      <div class="row">
+        <button type="button" class="btn small" id="impKp">Відкрити kp.json</button>
+        <button type="button" class="btn small" id="expKp">Зберегти kp.json</button>
+        <button type="button" class="btn small" id="newKp">Нова КП</button>
+      </div>
+      <div class="row">
+        <button type="button" class="btn small" id="impData">Завантажити дані компанії</button>
+        <button type="button" class="btn small" id="expData">Зберегти дані компанії</button>
+      </div>
+      <p class="note">Реквізити, каталог, печатка й підпис лежать у файлі даних компанії. Він зберігається лише в цьому браузері й нікуди не надсилається.</p>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+    </section>
+  </aside>
+
+  <main class="view">
+    <div class="top">
+      <h1>Генератор КП</h1>
+      <div class="status" id="status"></div>
+      <button type="button" class="btn primary" id="print">Зберегти PDF</button>
+    </div>
+    <div class="banner" id="demo" hidden><p><b>Це демонстраційні дані.</b> Завантаж файл даних своєї компанії, щоб у КП з’явилися реквізити, логотип, каталог, печатка й підпис.</p><button type="button" class="btn small primary" id="impData2">Завантажити дані компанії</button></div>
+    <ul class="issues" id="issues" hidden></ul>
+    <div id="pagesWrap"><div id="pages"></div></div>
+  </main>
+</div>
+<div class="measure" id="measure"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+const DEMO = {"формат": "kp-data/1", "демо": true, "компанія": {"назва_повна": "Товариство з обмеженою відповідальністю «ДЕМО ТЕХ»", "назва_коротка": "ТОВ «ДЕМО ТЕХ»", "адреса": "00000, Україна, м. Київ, вул. Прикладна, 1", "адреса_виробника": "Україна, 00000, м. Київ, вул. Прикладна, 1", "єдрпоу": "00000000", "рахунок": "Р/р UA000000000000000000000000000 в АТ «БАНК», МФО 000000", "телефон": "+380000000000", "email": "office@example.com", "посада_підписанта": "Директор", "підписант": "І.І. ПРІЗВИЩЕ"}, "типово": {"оплата": "протягом 5 (п'яти) календарних днів з дати постачання", "логістика": "м. Київ, за адресою потужностей Постачальника"}, "каталог": {"ALFA": {"назва": "Демонстраційний виріб «ALFA»", "назва_родовий": "демонстраційного виробу «ALFA»", "повне_найменування": "Демонстраційний виріб «ALFA»", "ту": "ТУ У 00.0-00000000-000:2026", "специфікація": "АЛФА.0000000", "уктзед": "0000", "нато": "відсутній", "дк021": "00000000-0 — Назва коду за ДК 021:2015", "остання_ціна": 10000, "ттх": [["Маса, не більше", "0 кг"], ["Габарити (Ш × Д × В)", "000 × 000 × 000 мм"], ["Час роботи, не менше", "00 хв"], ["Температурний режим", "від −00 до +00 °C"]]}}, "приклад": {"номер": "1", "дата": "01.09.2026", "адресат": "Військова частина А0000", "дк021": "", "позиції": [{"код": "ALFA", "кількість": 2, "ціна": 10000}], "строк": "до 31.10.2026 року", "графік": "", "оплата": "протягом 5 (п'яти) календарних днів з дати постачання", "логістика": "м. Київ, за адресою потужностей Постачальника", "діє_до": "05.09.2026", "сума_прописом": false, "печатка_підпис": true}};
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const NBSP = " ";
+const LS_DATA = "kpgen.data.v1", LS_KP = "kpgen.kp.v1";
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } } };
+function toast(t) { const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (e.hidden = true), 3200); }
+
+/* ---------------- data ---------------- */
+let DATA = store.get(LS_DATA) || DEMO;
+let isDemo = !store.get(LS_DATA);
+const today = () => new Date().toISOString().slice(0, 10);
+const isoToUa = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ""); return m ? `${m[3]}.${m[2]}.${m[1]}` : (s || ""); };
+const uaToIso = s => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s || ""); return m ? `${m[3]}-${m[2]}-${m[1]}` : (s || ""); };
+function blankKp() {
+  const def = DATA.типово || {}, first = Object.keys(DATA.каталог || {})[0];
+  return { номер: "", дата: isoToUa(today()), адресат: "", дк021: "", позиції: first ? [{ код: first, кількість: 1, ціна: DATA.каталог[first].остання_ціна || 0 }] : [],
+    строк: "", графік: "", оплата: def.оплата || "", логістика: def.логістика || "", діє_до: "", сума_прописом: false, печатка_підпис: true };
+}
+let KP = store.get(LS_KP) || (isDemo && DEMO.приклад ? JSON.parse(JSON.stringify(DEMO.приклад)) : blankKp());
+
+/* ---------------- text helpers (ported from the owner's generator) ---------------- */
+function money(x) { const v = Math.round(Number(x || 0) * 100) / 100; const [i, f] = v.toFixed(2).split("."); return i.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP) + "," + f; }
+function lowerFirst(s) { const w = s.split(/[\s-]/)[0]; return /[A-ZА-ЯІЇЄҐ]/.test(w.slice(1)) ? s : s.charAt(0).toLowerCase() + s.slice(1); }
+function listJoin(a) { return a.length === 1 ? a[0] : a.slice(0, -1).join(", ") + " та " + a[a.length - 1]; }
+const OD_F = ["", "одна", "дві", "три", "чотири", "п’ять", "шість", "сім", "вісім", "дев’ять"], OD_M = ["", "один", "два", "три", "чотири", "п’ять", "шість", "сім", "вісім", "дев’ять"];
+const NADC = ["десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять", "п’ятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "дев’ятнадцять"];
+const DES = ["", "", "двадцять", "тридцять", "сорок", "п’ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев’яносто"];
+const SOT = ["", "сто", "двісті", "триста", "чотириста", "п’ятсот", "шістсот", "сімсот", "вісімсот", "дев’ятсот"];
+const form3 = (n, a, b, c) => (n % 100 >= 11 && n % 100 <= 19) ? c : ({ 1: a, 2: b, 3: b, 4: b }[n % 10] || c);
+function triple(n, fem) { const w = [SOT[Math.floor(n / 100)]], d = Math.floor((n % 100) / 10), o = n % 10; if (d === 1) w.push(NADC[o]); else w.push(DES[d], (fem ? OD_F : OD_M)[o]); return w.filter(Boolean).join(" "); }
+function sumWords(x) {
+  const c = Math.round(Number(x) * 100), grn = Math.floor(c / 100), kop = c % 100; let t;
+  if (grn === 0) t = "нуль гривень"; else { const p = [];
+    for (const [div, fem, f] of [[1e9, false, ["мільярд", "мільярди", "мільярдів"]], [1e6, false, ["мільйон", "мільйони", "мільйонів"]], [1e3, true, ["тисяча", "тисячі", "тисяч"]]]) { const k = Math.floor(grn / div) % 1000; if (k) p.push(triple(k, fem) + " " + form3(k, ...f)); }
+    const k = grn % 1000; if (k) p.push(triple(k, true)); p.push(form3(grn, "гривня", "гривні", "гривень")); t = p.join(" "); }
+  t += ` ${String(kop).padStart(2, "0")} ${form3(kop, "копійка", "копійки", "копійок")}`; return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+/* ---------------- resolve + validate ---------------- */
+const REQ_KP = ["номер", "дата", "адресат", "строк", "оплата", "діє_до"];
+const REQ_POS = ["назва", "назва_родовий", "повне_найменування", "ту", "специфікація", "уктзед", "ттх", "кількість", "ціна"];
+function resolve() {
+  const issues = [], cat = DATA.каталог || {}, items = [];
+  for (const k of REQ_KP) if (!String(KP[k] || "").trim()) issues.push(`Не заповнено поле «${{ номер: "вих. №", дата: "дата КП", адресат: "адресат", строк: "строк постачання", оплата: "умови оплати", діє_до: "КП діє до" }[k]}».`);
+  if (!KP.позиції.length) issues.push("Додай хоча б одну позицію.");
+  KP.позиції.forEach((p, i) => {
+    if (p.код && !cat[p.код]) { issues.push(`Позиція ${i + 1}: коду «${p.код}» немає в каталозі.`); return; }
+    const full = Object.assign({ нато: "відсутній" }, p.код ? cat[p.код] : {}, Object.fromEntries(Object.entries(p).filter(([, v]) => v !== "" && v != null)));
+    for (const k of REQ_POS) { const v = full[k]; if (v == null || v === "" || (Array.isArray(v) && !v.length)) issues.push(`Позиція ${i + 1}${full.назва ? " (" + full.назва + ")" : ""}: немає поля «${k.replace(/_/g, " ")}».`); }
+    if (!(Number(full.кількість) > 0)) issues.push(`Позиція ${i + 1}: кількість має бути більшою за нуль.`);
+    if (!(Number(full.ціна) > 0)) issues.push(`Позиція ${i + 1}: вкажи ціну за 1 шт.`);
+    items.push(full);
+  });
+  const d0 = uaToIso(KP.дата), d1 = uaToIso(KP.діє_до);
+  if (d0 && d1 && d1 < d0) issues.push("Дата «діє до» раніша за дату КП.");
+  const dk = KP.дк021 || (items.find(p => p.дк021) || {}).дк021 || "";
+  if (!dk) issues.push("Не вказано код ДК 021:2015 предмета закупівлі.");
+  const total = items.reduce((s, p) => s + Number(p.кількість || 0) * Number(p.ціна || 0), 0);
+  return { issues, items, dk, total };
+}
+
+/* ---------------- document blocks ---------------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+function svgEl(w, h, vb) { const s = document.createElementNS(SVGNS, "svg"); s.setAttribute("viewBox", vb); s.style.width = w + "pt"; s.style.height = h + "pt"; s.style.display = "block"; return s; }
+function svgPath(svg, d, fill, stroke, sw) { const p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", d); p.setAttribute("fill", fill || "none"); if (stroke) { p.setAttribute("stroke", stroke); p.setAttribute("stroke-width", sw); p.setAttribute("stroke-linejoin", "miter"); } svg.appendChild(p); return p; }
+function zigzag(w) { const n = Math.floor(w / 6), amp = 2.6; let d = ""; for (let i = 0; i <= n; i++) d += (i ? " L" : "M") + (i * w / n).toFixed(2) + " " + (i % 2 ? 0.4 : amp + 0.4); const s = svgEl(w, amp + 0.8, `0 0 ${w} ${amp + 0.8}`); svgPath(s, d, null, "#0B0B0A", 0.55); return s; }
+function logoNode(w) {
+  const L = DATA.бренд && DATA.бренд.логотип;
+  if (!L) { const t = el("div", null, DATA.компанія.назва_коротка); t.style.cssText = `font-weight:600;font-size:${w > 100 ? 11 : 8}pt;line-height:1.1;white-space:nowrap`; return t; }
+  const s = svgEl(w, w * L.h / L.w, `0 0 ${L.w} ${L.h}`); for (const d of L.d) svgPath(s, d, "#0B0B0A"); return s;
+}
+function B(cls, gap, kwn) { const b = el("div", "blk " + (cls || "")); b._gap = gap || 0; b._kwn = !!kwn; return b; }
+function para(text, cls, gap, kwn) { const b = B(cls, gap, kwn); b.textContent = text; return b; }
+function rich(parts, cls, gap, kwn) { const b = B(cls, gap, kwn); for (const [t, bold] of parts) b.append(bold ? el("b", null, t) : document.createTextNode(t)); return b; }
+function bullet(text, gap, kwn) {
+  const b = B("li", gap, kwn), s = svgEl(16, 13.4, "0 0 16 13.4"); svgPath(s, "M6 7.9 L8.6 5.1 L11.2 7.9", null, "#0B0B0A", 1.15);
+  const t = el("div", null, text); b.append(s, t); return b;
+}
+let mctx = null;
+function textW(t, font) { if (!mctx) mctx = document.createElement("canvas").getContext("2d"); mctx.font = font; return mctx.measureText(t).width * 0.75; }  /* px → pt */
+const F_TXT = '400 11.2px DocSans, Geologica, sans-serif', F_HEAD = '500 10.667px DocSans, Geologica, sans-serif', F_NUM = '500 10.667px "Geist Mono", monospace';
+function table(cols, rows, opts = {}) {
+  /* cols: [{title, num, right, max}] → blocks: header + one block per row (so a table can break between rows) */
+  const widths = cols.map((c, i) => Math.min(c.max || 999, Math.max(textW(c.title, F_HEAD), ...rows.map(r => textW(String(r[i]), c.num ? F_NUM : F_TXT))) + 4));
+  const fixed = widths.reduce((a, b) => a + b, 0) + 16 * (cols.length - 1);
+  if (opts.fill != null) widths[opts.fill] = Math.max(60, widths[opts.fill] + (491 - fixed));
+  const tpl = widths.map(w => w.toFixed(2) + "pt").join(" ");
+  const mk = (cells, cls) => { const r = el("div", "blk trow " + (cls || "")); r.style.gridTemplateColumns = tpl; r._gap = 0;
+    cells.forEach((v, i) => { const c = el("div", (cols[i].num && cls !== "head" ? "n " : "") + (cols[i].right ? "r" : ""), String(v)); r.append(c); }); return r; };
+  const head = mk(cols.map(c => c.title), "head"); head._kwn = true; head._gap = opts.gap || 0;
+  const out = [head]; const hdr = () => { const h = mk(cols.map(c => c.title), "head"); h._kwn = true; return h; };
+  rows.forEach((r, i) => { const b = mk(r, i === rows.length - 1 && opts.total ? "total" : ""); b._head = hdr; b._tableRow = i; out.push(b); });
+  out._rows = rows.length; return out;
+}
+
+function buildBlocks(R) {
+  const к = DATA.компанія, blocks = [];
+  const ref = B("ref", 2), l = el("div", null, `вих. №${NBSP}${KP.номер || "—"} від ${KP.дата || "—"}`), to = el("div", "to", KP.адресат || "Адресат");
+  ref.append(l, to); blocks.push(ref);
+  blocks.push(para("КОМЕРЦІЙНА ПРОПОЗИЦІЯ", "title", 26, true));
+  const subj = R.items.length ? listJoin(R.items.map(p => p.назва_родовий || p.назва || "…")) : "…";
+  blocks.push(para(`на постачання товару оборонного призначення щодо предмета закупівлі: ${subj}, ${R.dk || "код ДК 021:2015"} за ДК 021:2015 Єдиного закупівельного словника.`, "j", 20));
+
+  blocks.push(para("1. Повне найменування, код згідно з УКТ ЗЕД, номенклатурний номер НАТО (за наявності):", "h", 16, true));
+  R.items.forEach((p, i) => {
+    blocks.push(rich([[`Позиція ${i + 1}. `, true], [`${p.назва || "…"} — ${p.кількість || 0}${NBSP}шт.`, false]], "", 7, true));
+    blocks.push(bullet(`повне найменування: ${p.повне_найменування || "…"}, ${p.ту || "…"}, згідно зі специфікацією ${p.специфікація || "…"},`, 2.5, true));
+    blocks.push(bullet(`код згідно з УКТ ЗЕД: ${p.уктзед || "…"},`, 3, true));
+    blocks.push(bullet(`номенклатурний номер НАТО (за наявності): ${p.нато || "відсутній"}.`, 3));
+  });
+
+  blocks.push(para("2. Тактико-технічні або інші характеристики (за наявності):", "h", 16, true));
+  for (const p of R.items) {
+    const rows = (p.ттх || []).map(r => [r[0], String(r[1]).replace(/(^|[\s(])-(?=\d)/g, "$1−")]); if (!rows.length) continue;
+    blocks.push(rich([[`ТТХ ${p.назва_родовий || p.назва} · ${p.кількість}${NBSP}шт.`, true]], "", 10, true));
+    const t = table([{ title: "Параметр", max: 230 }, { title: "Значення", max: 245 }], rows, { gap: 7 });
+    blocks.push(...t);
+  }
+
+  blocks.push(rich([["3. Дані щодо технічного стану товару: ", true], ["відповідають першій категорії" + (R.items.length > 1 ? " (за всіма позиціями)." : "."), false]], "", 16));
+  blocks.push(para("4. Повне найменування виробника товару (надавача послуг, виконавця робіт), країна походження товару, місцезнаходження виробника товару (надавача послуг, виконавця робіт), логістичний маршрут постачання (за наявності):", "h", 16, true));
+  blocks.push(bullet(`повне найменування виробника товару (надавача послуг, виконавця робіт): ${к.назва_повна},`, 6, true));
+  blocks.push(bullet(`країна походження товару, місцезнаходження виробника товару (надавача послуг, виконавця робіт): ${/^Україна/.test(к.адреса_виробника || "") ? к.адреса_виробника : "Україна; " + (к.адреса_виробника || к.адреса)}.`, 3, true));
+  blocks.push(bullet(`логістичний маршрут постачання (за наявності): ${KP.логістика || "…"}.`, 3));
+
+  blocks.push(para("5. Умови постачання товару, надання послуг, виконання робіт (строк, графік тощо):", "h", 16, true));
+  blocks.push(bullet(`строк: ${KP.строк || "…"},`, 6, true));
+  blocks.push(bullet(`графік: ${KP.графік || KP.строк || "…"}.`, 3));
+
+  blocks.push(para("6. Загальна вартість (ціна) та умови оплати:", "h", 16, true));
+  const rows = R.items.map((p, i) => [i + 1, p.назва || "…", p.кількість || 0, money(p.ціна), money(Number(p.кількість || 0) * Number(p.ціна || 0))]);
+  rows.push(["", "Разом, без ПДВ", "", "", money(R.total)]);
+  const pt = table([{ title: "№", num: true }, { title: "Найменування" }, { title: "К-сть, шт.", num: true, right: true }, { title: "Ціна, грн", num: true, right: true }, { title: "Сума, грн", num: true, right: true }], rows, { gap: 8, total: true, fill: 1 });
+  pt.forEach(b => (b._kwn = true)); blocks.push(...pt);
+  blocks.push(bullet(`загальна вартість (ціна): ${money(R.total)} грн без ПДВ${KP.сума_прописом ? " (" + sumWords(R.total) + ")" : ""};`, 10, true));
+  blocks.push(bullet(`умови оплати: ${KP.оплата || "…"}.`, 3, true));
+
+  blocks.push(rich([[`Комерційна пропозиція діє до ${KP.діє_до || "…"} року.`, true]], "", 14, true));
+  const s = B("sign", 0); s.classList.remove("blk"); s.className = "blk sign";
+  s.append(el("div", "who", `${к.посада_підписанта} ${к.назва_коротка}`), el("div", "line"), el("div", "name", к.підписант));
+  const withStamp = KP.печатка_підпис && DATA.печатка && DATA.підпис;
+  if (withStamp) { const a = el("img", "sig"); a.src = DATA.підпис; a.alt = ""; const b = el("img", "stamp"); b.src = DATA.печатка; b.alt = ""; s.append(a, b); }
+  else s.append(el("div", "mp", "М.П."));
+  blocks.push(s);
+  return blocks;
+}
+
+/* ---------------- pagination ---------------- */
+const TOP1 = 150, TOPN = 92, BOT = 772, ML = 56, TW = 491;
+function paginate(blocks) {
+  const m = $("#measure"); m.textContent = ""; const probe = el("div"); probe.style.height = "100pt"; m.append(probe);
+  for (const b of blocks) m.append(b);
+  const k = probe.getBoundingClientRect().height / 100; const H = blocks.map(b => b.getBoundingClientRect().height / k);
+  /* short tables stay whole */
+  for (let i = 0; i < blocks.length; i++) if (blocks[i].classList.contains("head")) { let j = i + 1, h = H[i]; while (j < blocks.length && blocks[j]._tableRow != null) h += H[j++]; if (h < 240) for (let q = i; q < j - 1; q++) blocks[q]._kwn = true; i = j - 1; }
+  const pages = [[]]; let y = 0, avail = BOT - TOP1;
+  for (let i = 0; i < blocks.length; i++) {
+    let need = H[i], j = i; while (blocks[j]._kwn && j + 1 < blocks.length) { j++; need += blocks[j]._gap + H[j]; }
+    const page = pages[pages.length - 1], gap = page.length ? blocks[i]._gap : 0;
+    if (page.length && y + gap + need > avail && need <= BOT - TOPN) {
+      pages.push([]); y = 0; avail = BOT - TOPN;
+      if (blocks[i]._tableRow > 0 && blocks[i]._head) { const h = blocks[i]._head(); m.append(h); const hh = h.getBoundingClientRect().height / k; pages[pages.length - 1].push([h, 0]); y += hh; }
+      pages[pages.length - 1].push([blocks[i], 0]); y += H[i];
+    } else { page.push([blocks[i], gap]); y += gap + H[i]; }
+  }
+  return pages;
+}
+function render() {
+  const R = resolve(), к = DATA.компанія, pages = paginate(buildBlocks(R)), wrap = $("#pages"); wrap.textContent = "";
+  const refLine = `Комерційна пропозиція · вих. №${NBSP}${KP.номер || "—"} від ${KP.дата || "—"}`;
+  pages.forEach((blocks, i) => {
+    const pg = el("div", "page"), abs = (node, x, y, w) => { const a = el("div", "abs"); a.style.left = x + "pt"; a.style.top = y + "pt"; if (w) a.style.width = w + "pt"; a.append(node); pg.append(a); return a; };
+    if (i === 0) {
+      abs(logoNode(122), ML, 40);
+      const req = el("div", "d-small"); req.style.whiteSpace = "pre-line";
+      req.textContent = [к.назва_повна, к.адреса, `Код ЄДРПОУ ${к.єдрпоу}`, к.рахунок, `Тел.: ${к.телефон}    Email: ${к.email}`].join("\n"); abs(req, ML, 60, 320);
+      const F = DATA.бренд && DATA.бренд.зграя; if (F) { const s = svgEl(168, 168 * F.h / F.w, `0 0 ${F.w} ${F.h}`); svgPath(s, F.d, "#0B0B0A"); abs(s, ML + TW - 168, 30); }
+      abs(zigzag(TW), ML, 116.1);
+    } else {
+      abs(logoNode(82), ML, 40);
+      const r = el("div", "d-small", refLine); r.style.textAlign = "right"; abs(r, ML, 43.5, TW); abs(zigzag(TW), ML, 63.6);
+    }
+    const body = el("div", "abs"); body.style.cssText = `left:${ML}pt;top:${i === 0 ? TOP1 : TOPN}pt;width:${TW}pt`;
+    for (const [b, gap] of blocks) { b.style.marginTop = gap + "pt"; body.append(b); } pg.append(body);
+    const rule = el("div", "abs"); rule.style.cssText = `left:${ML}pt;top:790pt;width:${TW}pt;border-top:.4pt solid #0B0B0A`; pg.append(rule);
+    abs(el("div", "d-foot", `${к.назва_коротка} · ЄДРПОУ ${к.єдрпоу} · КП №${NBSP}${KP.номер || "—"} від ${KP.дата || "—"}`), ML, 796.9, 380);
+    const pn = el("div", "d-foot d-mono", `Сторінка ${i + 1} з ${pages.length}`); pn.style.textAlign = "right"; abs(pn, ML, 796.9, TW);
+    wrap.append(pg);
+  });
+  const iss = $("#issues"); iss.textContent = ""; iss.hidden = !R.issues.length; for (const t of R.issues) iss.append(el("li", null, t));
+  $("#total").textContent = ""; $("#total").append("Разом: ", el("b", null, money(R.total) + " грн"), " без ПДВ");
+  const st = $("#status"); st.textContent = "";
+  st.append(el("span", null, `${pages.length} стор.`), el("span", hasBrandFont() ? "ok" : "warn", hasBrandFont() ? "шрифт Zlam" : "шрифт-заміна Geologica (Zlam не встановлено)"),
+    el("span", KP.печатка_підпис && DATA.печатка ? "ok" : "", KP.печатка_підпис && DATA.печатка ? "печатка і підпис: так" : "печатка і підпис: ні"));
+  $("#demo").hidden = !isDemo; fit(); store.set(LS_KP, KP); LAST = R;
+}
+let LAST = null;
+function hasBrandFont() { if (!mctx) mctx = document.createElement("canvas").getContext("2d"); const t = "Комерційна пропозиція 0123"; mctx.font = '400 40px DocSans, monospace'; const a = mctx.measureText(t).width; mctx.font = "400 40px monospace"; return Math.abs(a - mctx.measureText(t).width) > 0.5; }
+function fit() { const w = $("#pagesWrap").clientWidth, p = $("#pages"), pw = 595 * 96 / 72, s = Math.min(1.25, w / pw); p.style.transform = `scale(${s})`; p.style.height = p.scrollHeight * s + "px"; $("#pagesWrap").style.height = p.scrollHeight * s + "px"; }
+new ResizeObserver(() => { $("#pages").style.height = "auto"; fit(); }).observe($("#pagesWrap"));
+let rt = 0; const schedule = () => { clearTimeout(rt); rt = setTimeout(render, 120); };
+
+/* ---------------- form ---------------- */
+const FIELDS = ["номер", "дата", "адресат", "дк021", "строк", "графік", "оплата", "логістика", "діє_до", "сума_прописом", "печатка_підпис"];
+function syncForm() {
+  for (const k of FIELDS) { const e = $("#f-" + k); if (e.type === "checkbox") e.checked = !!KP[k]; else if (e.type === "date") e.value = uaToIso(KP[k]); else e.value = KP[k] || ""; }
+  $("#f-дк021").placeholder = (Object.values(DATA.каталог || {}).find(p => p.дк021) || {}).дк021 || "з оголошення про закупівлю";
+  drawPositions();
+}
+for (const k of FIELDS) $("#f-" + k).addEventListener("input", e => { const t = e.target; KP[k] = t.type === "checkbox" ? t.checked : t.type === "date" ? isoToUa(t.value) : t.value; schedule(); });
+const POS_TEXT = [["назва", "Назва (називний відмінок)"], ["назва_родовий", "Назва в родовому відмінку"], ["повне_найменування", "Повне найменування"], ["ту", "ТУ"], ["специфікація", "Специфікація"], ["уктзед", "Код УКТ ЗЕД"], ["нато", "Номер НАТО"]];
+function drawPositions() {
+  const box = $("#positions"), cat = DATA.каталог || {}; box.textContent = "";
+  KP.позиції.forEach((p, i) => {
+    const card = el("div", "pos"), head = el("div", "head"); head.append(el("b", null, `Позиція ${i + 1}`));
+    const rm = el("button", "btn small", "Прибрати"); rm.type = "button"; rm.addEventListener("click", () => { KP.позиції.splice(i, 1); drawPositions(); schedule(); }); head.append(rm); card.append(head);
+    const sel = el("select"); sel.append(new Option("Свій товар (поза каталогом)", "")); for (const [code, it] of Object.entries(cat)) sel.append(new Option(`${code} — ${it.назва}`, code)); sel.value = p.код && cat[p.код] ? p.код : "";
+    const fs = el("label", "f"); fs.append(el("span", null, "Товар з каталогу"), sel); card.append(fs);
+    const g = el("div", "grid2"), q = el("input"), pr = el("input"); q.type = pr.type = "number"; q.min = "1"; q.step = "1"; pr.min = "0"; pr.step = "0.01"; q.value = p.кількість ?? 1; pr.value = p.ціна ?? "";
+    const fq = el("label", "f"); fq.append(el("span", null, "Кількість, шт."), q); const fp = el("label", "f"); fp.append(el("span", null, "Ціна за 1 шт., грн без ПДВ"), pr); g.append(fq, fp); card.append(g);
+    q.addEventListener("input", () => { p.кількість = Number(q.value); schedule(); }); pr.addEventListener("input", () => { p.ціна = Number(pr.value); schedule(); });
+    const det = el("details"), sum = el("summary", null, p.код ? "Змінити дані товару лише для цієї КП" : "Дані товару"), inner = el("div"); det.append(sum, inner); if (!p.код) det.open = true;
+    const base = p.код ? cat[p.код] || {} : {};
+    for (const [k, title] of POS_TEXT) { const f = el("label", "f"), inp = el("input"); inp.value = p[k] ?? ""; inp.placeholder = base[k] || ""; f.append(el("span", null, title), inp); inner.append(f);
+      inp.addEventListener("input", () => { if (inp.value) p[k] = inp.value; else delete p[k]; schedule(); }); }
+    const ft = el("label", "f"), ta = el("textarea"); ta.rows = 5; ta.placeholder = (base.ттх || []).map(r => r.join(" | ")).join("\n") || "Параметр | Значення";
+    ta.value = (p.ттх || []).map(r => r.join(" | ")).join("\n"); ft.append(el("span", null, "ТТХ: один рядок — «параметр | значення»"), ta); inner.append(ft);
+    ta.addEventListener("input", () => { const rows = ta.value.split("\n").map(s => s.split("|").map(x => x.trim())).filter(r => r[0] && r.length > 1).map(r => [r[0], r.slice(1).join(" | ")]); if (rows.length) p.ттх = rows; else delete p.ттх; schedule(); });
+    const save = el("button", "btn small", "Зберегти товар у каталог"); save.type = "button"; inner.append(save);
+    save.addEventListener("click", () => { const full = Object.assign({}, base, Object.fromEntries(Object.entries(p).filter(([k]) => !["код", "кількість", "ціна"].includes(k)))); if (!full.назва) return toast("Спершу вкажи назву товару");
+      const code = p.код || (full.назва.match(/«([^»]+)»/) || [0, full.назва.split(" ")[0]])[1]; full.остання_ціна = Number(p.ціна) || full.остання_ціна || 0; DATA.каталог = DATA.каталог || {}; DATA.каталог[code] = full;
+      if (!isDemo) store.set(LS_DATA, DATA); KP.позиції[i] = { код: code, кількість: p.кількість, ціна: p.ціна }; drawPositions(); schedule(); toast(`Збережено в каталог як «${code}». Не забудь зберегти файл даних компанії.`); });
+    card.append(det);
+    sel.addEventListener("change", () => { const c = sel.value; KP.позиції[i] = c ? { код: c, кількість: p.кількість || 1, ціна: cat[c].остання_ціна || 0 } : { кількість: p.кількість || 1, ціна: p.ціна || 0 }; drawPositions(); schedule(); });
+    box.append(card);
+  });
+}
+$("#addPos").addEventListener("click", () => { const cat = DATA.каталог || {}, used = new Set(KP.позиції.map(p => p.код)), c = Object.keys(cat).find(k => !used.has(k)); KP.позиції.push(c ? { код: c, кількість: 1, ціна: cat[c].остання_ціна || 0 } : { кількість: 1, ціна: 0 }); drawPositions(); schedule(); });
+
+/* ---------------- files ---------------- */
+function download(name, text) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "application/json" })); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+let fileMode = "";
+function pick(mode) { fileMode = mode; $("#file").click(); }
+$("#file").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return; let j;
+  try { j = JSON.parse(await f.text()); } catch (err) { return toast("Це не JSON-файл або він пошкоджений."); }
+  if (fileMode === "data") {
+    if (j.компанія && j.каталог) { DATA = j; }
+    else if (Object.values(j).every(v => v && typeof v === "object" && v.назва)) { DATA = Object.assign({}, DATA, { каталог: j }); toast("Оновлено тільки каталог."); }
+    else return toast("У файлі немає даних компанії (потрібні розділи «компанія» і «каталог»).");
+    isDemo = false; if (!store.set(LS_DATA, DATA)) toast("Браузер не зміг зберегти дані: після перезавантаження їх треба буде завантажити знову.");
+    KP = blankKp(); syncForm(); render();
+  } else {
+    if (!Array.isArray(j.позиції)) return toast("Це не файл КП: у ньому немає списку «позиції».");
+    KP = Object.assign(blankKp(), j); if (j.печатка_підпис === undefined) KP.печатка_підпис = true; syncForm(); render();
+  }
+});
+$("#impKp").addEventListener("click", () => pick("kp")); $("#impData").addEventListener("click", () => pick("data")); $("#impData2").addEventListener("click", () => pick("data"));
+const baseName = () => { const codes = (LAST ? LAST.items : []).map(p => String(p.код || (p.назва || "").slice(0, 15)).replace(/[^\wА-Яа-яІіЇїЄєҐґ-]/g, "")).join("_"); return `КП_${DATA.компанія.назва_коротка.replace(/[«»"]/g, "").replace(/\s+/g, "_")}_№${KP.номер || "б-н"}${codes ? "_" + codes : ""}`; };
+$("#expKp").addEventListener("click", () => download(baseName() + ".json", JSON.stringify(KP, null, 2)));
+$("#expData").addEventListener("click", () => { if (isDemo) return toast("Зараз відкриті демонстраційні дані."); download("дані-компанії.json", JSON.stringify(DATA)); });
+$("#newKp").addEventListener("click", () => { KP = blankKp(); syncForm(); render(); });
+$("#print").addEventListener("click", () => {
+  render(); if (LAST.issues.length) return toast("Спершу виправ зауваження над документом.");
+  const t = document.title; document.title = baseName(); const back = () => { document.title = t; window.removeEventListener("afterprint", back); }; window.addEventListener("afterprint", back);
+  window.print();
+});
+
+/* ---------------- boot ---------------- */
+syncForm(); render();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+</script>
+</body>
+</html>
